@@ -11,6 +11,8 @@ var proxy = require('./lib/proxy');
 var record = require('./lib/record');
 var curl = require('./lib/curl');
 var debug = require('debug')('yakbak:server');
+var fs = require('fs');
+var promiseRetry = require('promise-retry');
 
 /**
  * Returns a new yakbak proxy middleware.
@@ -24,40 +26,50 @@ var debug = require('debug')('yakbak:server');
 module.exports = function (host, opts) {
   assert(opts.dirname, 'You must provide opts.dirname');
 
+  var state = "";
+
   return function (req, res) {
+
+    req.headers['x-yakbak-state'] = state || 'undefined';
+
     mkdirp.sync(opts.dirname);
 
     debug('req', req.url);
 
-    return buffer(req).then(function (body) {
-      var file = path.join(opts.dirname, tapename(req, body));
+    return buffer(req)
+      .then(body => {
 
-      return Promise.try(function () {
-        return require.resolve(file);
-      }).catch(ModuleNotFoundError, function (/* err */) {
+          const currentTape = tapename(req, body);
+          const filename = path.join(opts.dirname, currentTape + '.js');
 
-        if (opts.noRecord) {
-          throw new RecordingDisabledError('Recording Disabled');
-        } else {
-          return proxy(req, body, host).then(function (pres) {
-            return record(pres.req, pres, file);
-          });
+          return promiseRetry(retryFn => {
+
+              console.log(filename);
+              console.log(state);
+
+              if (opts.mode === 'replayOnly') {
+                if (require(filename).state !== state) {
+                  retryFn('Request was out of the order');
+                }
+              }
+
+              return opts.mode === 'replayOnly' ?
+                new Promise(() => {
+                  require(filename)(req, res);
+                  state = currentTape;
+                  return filename;
+                }) :
+                proxy(req, body, host)
+                  .then(pres => record(pres.req, pres, filename, state))
+                  .then(() => {
+                    require(filename)(req, res);
+                    state = currentTape;
+                    return filename;
+                  });
+            },
+            {retries: 3, minTimeout: 1000, maxTimeout: 2000});
         }
-
-      });
-    }).then(function (file) {
-      return require(file);
-    }).then(function (tape) {
-      return tape(req, res);
-    }).catch(RecordingDisabledError, function (err) {
-      /* eslint-disable no-console */
-      console.log('An HTTP request has been made that yakbak does not know how to handle');
-      console.log(curl.request(req));
-      /* eslint-enable no-console */
-      res.statusCode = err.status;
-      res.end(err.message);
-    });
-
+      );
   };
 
   /**
@@ -68,9 +80,10 @@ module.exports = function (host, opts) {
    */
 
   function tapename(req, body) {
+
     var hash = opts.hash || messageHash.sync;
 
-    return hash(req, Buffer.concat(body)) + '.js';
+    return hash(req, Buffer.concat(body));
   }
 
 };

@@ -8,7 +8,7 @@ var path = require("path");
 <% }); -%>
  */
 
-module.exports = function (req, res) {
+const modFunction = function (req, res) {
   res.statusCode = <%- JSON.stringify(res.statusCode) %>;
 
 <% Object.keys(res.headers).forEach(function (key) { -%>
@@ -24,3 +24,7 @@ module.exports = function (req, res) {
 
   return __filename;
 };
+
+modFunction.state = "<%- state %>";
+
+module.exports = modFunction;
