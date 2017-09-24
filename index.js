@@ -44,9 +44,6 @@ module.exports = function (host, opts) {
 
           return promiseRetry(retryFn => {
 
-              console.log(filename);
-              console.log(state);
-
               if (opts.mode === 'replayOnly') {
                 if (require(filename).state !== state) {
                   retryFn('Request was out of the order');
