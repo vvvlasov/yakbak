@@ -30,8 +30,6 @@ module.exports = function (host, opts) {
 
   return function (req, res) {
 
-    req.headers['x-yakbak-state'] = state || 'undefined';
-
     mkdirp.sync(opts.dirname);
 
     debug('req', req.url);
