@@ -24,50 +24,18 @@ var promiseRetry = require('promise-retry');
  */
 
 module.exports = function (host, opts) {
-  assert(opts.dirname, 'You must provide opts.dirname');
 
-  var state = "";
+  function respond(pres, res, body, filename) {
 
-  return function (req, res) {
-
-    req.headers['x-yakbak-state'] = state || 'undefined';
-
-    mkdirp.sync(opts.dirname);
-
-    debug('req', req.url);
-
-    return buffer(req)
-      .then(body => {
-
-          const currentTape = tapename(req, body);
-          const filename = path.join(opts.dirname, currentTape + '.js');
-
-          return promiseRetry(retryFn => {
-
-              if (opts.mode === 'replayOnly') {
-                if (require(filename).state !== state) {
-                  retryFn('Request was out of the order');
-                }
-              }
-
-              return opts.mode === 'replayOnly' ?
-                new Promise(() => {
-                  require(filename)(req, res);
-                  state = currentTape;
-                  return filename;
-                }) :
-                proxy(req, body, host)
-                  .then(pres => record(pres.req, pres, filename, state))
-                  .then(() => {
-                    require(filename)(req, res);
-                    state = currentTape;
-                    return filename;
-                  });
-            },
-            {retries: 3, minTimeout: 1000, maxTimeout: 2000});
-        }
-      );
-  };
+    res.statusCode = pres.statusCode;
+    Object.keys(pres.headers).forEach(function (key) {
+      res.setHeader(key, pres.headers[key]);
+    });
+    body.forEach(function (data) {
+      res.write(data);
+    });
+    res.end();
+  }
 
   /**
    * Returns the tape name for `req`.
@@ -83,6 +51,36 @@ module.exports = function (host, opts) {
     return hash(req, Buffer.concat(body));
   }
 
+  assert(opts.dirname, 'You must provide opts.dirname');
+
+  mkdirp.sync(opts.dirname);
+
+  if (opts.mode === 'replayOnly') {
+    const responseModules = fs.readdirSync(opts.dirname).map(function (filename) {
+      return require(opts.dirname + '/' + filename);
+    });
+    return function (req, res) {
+      return buffer(req).then(function (reqbody) {
+        var tape = tapename(req, reqbody);
+        var mod = responseModules.find(mod => mod.matchesRequest(tape));
+        return mod.getNext()(req, res);
+      });
+    }
+  } else {
+    return function (req, res) {
+      return buffer(req).then(function (reqbody) {
+        var tape = tapename(req, reqbody);
+        var filename = opts.dirname + '/' + tape + '.js';
+
+        return proxy(req, reqbody, host).then(function (pres) {
+          return record(pres.req, pres, filename).then(function (resbody) {
+            respond(pres, res, resbody, filename);
+            return filename;
+          });
+        });
+      });
+    }
+  }
 };
 
 /**

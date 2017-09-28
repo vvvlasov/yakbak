@@ -1,30 +1,18 @@
 var path = require("path");
 
-/**
- * <%- req.method %> <%- decodeURIComponent(req.path) %>
- *
-<% Object.keys(req._headers).forEach(function (key) { -%>
- * <%- key %>: <%- req._headers[key].replace('/*', '/ *').replace('*/', '* /') %>
-<% }); -%>
- */
+console.log(`Loading ${__filename}`);
 
-const modFunction = function (req, res) {
-  res.statusCode = <%- JSON.stringify(res.statusCode) %>;
+var responseArray = [];
+var callIndex = 0;
 
-<% Object.keys(res.headers).forEach(function (key) { -%>
-  res.setHeader(<%- JSON.stringify(key) %>, <%- JSON.stringify(res.headers[key]) %>);
-<% }); -%>
+function getNext() {
+    const fn = responseArray[callIndex];
+    callIndex += 1;
+    return fn;
+}
 
-  res.setHeader("x-yakbak-tape", path.basename(__filename, ".js"));
+function matchesRequest (requestIdentifier) {
+    return path.parse(__filename).name === requestIdentifier;
+}
 
-<% body.forEach(function (data) { -%>
-  res.write(new Buffer(<%- JSON.stringify(data.toString('base64')) %>, "base64"));
-<% }); -%>
-  res.end();
-
-  return __filename;
-};
-
-modFunction.state = "<%- state %>";
-
-module.exports = modFunction;
+module.exports = {getNext: getNext, matchesRequest: matchesRequest};
