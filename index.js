@@ -9,6 +9,7 @@ var path = require('path');
 var buffer = require('./lib/buffer');
 var proxy = require('./lib/proxy');
 var record = require('./lib/record');
+var recordPact = require('./lib/recordPact');
 var curl = require('./lib/curl');
 var debug = require('debug')('yakbak:server');
 var fs = require('fs');
@@ -73,13 +74,17 @@ module.exports = function (host, opts) {
         var filename = opts.dirname + '/' + tape + '.js';
 
         return proxy(req, reqbody, host).then(function (pres) {
-          return record(pres.req, pres, filename).then(function (resbody) {
-            respond(pres, res, resbody, filename);
-            return filename;
+          return buffer(pres).then(function (resbody) {
+            return record(pres.req, pres, resbody, filename).then(function () {
+              return opts.pactFile ? recordPact(req, pres, reqbody, resbody, opts.pactFile) : undefined;
+            }).then(function () {
+              respond(pres, res, resbody, filename);
+              return filename;
+            });
           });
         });
       });
-    }
+    };
   }
 };
 
