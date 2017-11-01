@@ -42,7 +42,7 @@ describe('record', function () {
 
   it('returns the filename', function (done) {
     req.on('response', function (res) {
-      subject(req, res, tmpdir.join('foo.js')).then(function (filename) {
+      subject(req, res, new Buffer(''), tmpdir.join('foo.js')).then(function (filename) {
         assert.equal(filename, tmpdir.join('foo.js'));
         done();
       }).catch(function (err) {
@@ -57,7 +57,7 @@ describe('record', function () {
     var expected = fixture.replace('{addr}', server.addr).replace('{port}', server.port);
 
     req.on('response', function (res) {
-      subject(req, res, tmpdir.join('foo.js')).then(function (filename) {
+      subject(req, res, new Buffer(''), tmpdir.join('foo.js')).then(function (filename) {
         assert.equal(fs.readFileSync(filename, 'utf8'), expected);
         done();
       }).catch(function (err) {

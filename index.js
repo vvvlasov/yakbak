@@ -58,13 +58,20 @@ module.exports = function (host, opts) {
 
   if (opts.mode === 'replayOnly') {
     const responseModules = fs.readdirSync(opts.dirname).map(function (filename) {
+      console.log(opts.dirname + '/' + filename);
       return require(opts.dirname + '/' + filename);
     });
     return function (req, res) {
       return buffer(req).then(function (reqbody) {
         var tape = tapename(req, reqbody);
         var mod = responseModules.find(mod => mod.matchesRequest(tape));
-        return mod.getNext()(req, res);
+        if (mod) {
+          return mod.getNext()(req, res);
+        } else {
+          res.statusCode = 404;
+          res.write(new Buffer('{error: \'TapeNotFound\'}'));
+          res.end();
+        }
       });
     }
   } else {
@@ -87,26 +94,3 @@ module.exports = function (host, opts) {
     };
   }
 };
-
-/**
- * Bluebird error predicate for matching module not found errors.
- * @param {Error} err
- * @returns {Boolean}
- */
-
-function ModuleNotFoundError(err) {
-  return err.code === 'MODULE_NOT_FOUND';
-}
-
-/**
- * Error class that is thrown when an unmatched request
- * is encountered in noRecord mode
- * @constructor
- */
-
-function RecordingDisabledError(message) {
-  this.message = message;
-  this.status = 404;
-}
-
-RecordingDisabledError.prototype = Object.create(Error.prototype);

@@ -4,13 +4,13 @@ var responseArray = [];
 var callIndex = 0;
 
 function getNext() {
-    const fn = responseArray[callIndex];
-    callIndex += 1;
-    return fn;
+  const fn = responseArray[callIndex];
+  callIndex += 1;
+  return fn;
 }
 
-function matchesRequest (requestIdentifier) {
-    return path.parse(__filename).name === requestIdentifier;
+function matchesRequest(requestIdentifier) {
+  return path.parse(__filename).name === requestIdentifier;
 }
 
 module.exports = {getNext: getNext, matchesRequest: matchesRequest};

@@ -14,8 +14,4 @@ function read(file) {
  * @see https://github.com/nodejs/node/pull/1062
  */
 
-if (semver.gte(process.version, '1.5.0')) {
-  module.exports = read('v1.5.0');
-} else {
-  module.exports = read('v0.10.x');
-}
+module.exports = read('v3.0.0');
