@@ -9,6 +9,7 @@ var createTmpdir = require('./helpers/tmpdir');
 var assert = require('assert');
 var http = require('http');
 var fs = require('fs');
+var matchers = require('../lib/matchers');
 
 var fixture = require('./fixtures');
 
@@ -33,11 +34,14 @@ describe('record', function () {
 
   beforeEach(function () {
     req = http.request({
+      method: 'GET',
       host: server.addr,
-      port: server.port
+      port: server.port,
+      path: '/request/path/1'
     });
     req.setHeader('User-Agent', 'My User Agent/1.0');
     req.setHeader('Connection', 'close');
+    req.mtchrs = [matchers.methodMatcher('GET')];
   });
 
   it('returns the filename', function (done) {

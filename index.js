@@ -14,6 +14,7 @@ var curl = require('./lib/curl');
 var debug = require('debug')('yakbak:server');
 var fs = require('fs');
 var promiseRetry = require('promise-retry');
+var matchers = require('./lib/matchers');
 
 /**
  * Returns a new yakbak proxy middleware.
@@ -58,13 +59,11 @@ module.exports = function (host, opts) {
 
   if (opts.mode === 'replayOnly') {
     const responseModules = fs.readdirSync(opts.dirname).map(function (filename) {
-      console.log(opts.dirname + '/' + filename);
       return require(opts.dirname + '/' + filename);
     });
     return function (req, res) {
       return buffer(req).then(function (reqbody) {
-        var tape = tapename(req, reqbody);
-        var mod = responseModules.find(mod => mod.matchesRequest(tape));
+        var mod = responseModules.find(mod => mod.matchesRequest(req));
         if (mod) {
           return mod.getNext()(req, res);
         } else {
@@ -82,6 +81,8 @@ module.exports = function (host, opts) {
 
         return proxy(req, reqbody, host).then(function (pres) {
           return buffer(pres).then(function (resbody) {
+            pres.req.mtchrs = [];
+            pres.req.mtchrs.push(matchers.methodMatcher('GET'));
             return record(pres.req, pres, resbody, filename).then(function () {
               return opts.pactFile ? recordPact(req, pres, reqbody, resbody, opts.pactFile) : undefined;
             }).then(function () {

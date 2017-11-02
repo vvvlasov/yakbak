@@ -9,8 +9,8 @@ function getNext() {
   return fn;
 }
 
-function matchesRequest(requestIdentifier) {
-  return path.parse(__filename).name === requestIdentifier;
+function matchesRequest(req) {
+  return [<%-fns%>].reduce((res, fn) => res && fn(req), true);
 }
 
-module.exports = {getNext: getNext, matchesRequest: matchesRequest};
+module.exports = {getNext, matchesRequest};

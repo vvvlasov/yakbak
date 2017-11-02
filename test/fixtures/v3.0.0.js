@@ -9,14 +9,16 @@ function getNext() {
   return fn;
 }
 
-function matchesRequest(requestIdentifier) {
-  return path.parse(__filename).name === requestIdentifier;
+function matchesRequest(req) {
+  return [function (req) {
+    return req.method === 'GET';
+  }].reduce((res, fn) => res && fn(req), true);
 }
 
-module.exports = {getNext: getNext, matchesRequest: matchesRequest};
+module.exports = {getNext, matchesRequest};
 responseArray.push(
   /**
-   * GET /
+   * GET /request/path/1
    *
    * host: {addr}:{port}
    * user-agent: My User Agent/1.0
