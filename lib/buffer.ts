@@ -2,7 +2,7 @@
 // Licensed under the terms of the MIT license. Please see LICENSE file in the project root for terms.
 
 import * as Promise from 'bluebird';
-import {Readable} from "stream";
+import {Readable} from 'stream';
 
 /**
  * Collect `stream`'s data in to an array of Buffers.

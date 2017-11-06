@@ -2,11 +2,9 @@
 // Licensed under the terms of the MIT license. Please see LICENSE file in the project root for terms.
 
 import * as Promise from 'bluebird';
-import {ClientRequest, IncomingMessage} from "http";
-import {Url} from "url";
-const https = require('https');
-const http = require('http');
-const url = require('url');
+import * as https from 'https';
+import * as http from 'http';
+import * as url from 'url';
 const debug = require('debug')('yakbak:proxy');
 
 /**
@@ -24,11 +22,11 @@ const mods: any = { 'http:': http, 'https:': https };
  * @returns {Promise.<http.IncomingMessage>}
  */
 
-export default function (req: IncomingMessage, body: Buffer[], host: string): Promise<IncomingMessage> {
-  return new Promise<IncomingMessage & {req: ClientRequest}>(function (resolve) {
-    const uri: Url = url.parse(host);
+export default function (req: http.IncomingMessage, body: Buffer[], host: string): Promise<http.IncomingMessage> {
+  return new Promise<http.IncomingMessage & {req: http.ClientRequest}>(function (resolve) {
+    const uri: url.Url = url.parse(host);
     const mod = mods[uri.protocol] || http;
-    const preq: ClientRequest = mod.request({
+    const preq: http.ClientRequest = mod.request({
       hostname: uri.hostname,
       port: uri.port,
       method: req.method,
@@ -37,7 +35,7 @@ export default function (req: IncomingMessage, body: Buffer[], host: string): Pr
 
       servername: uri.hostname,
       rejectUnauthorized: false
-    }, function (pres: IncomingMessage & {req: ClientRequest}) {
+    }, function (pres: http.IncomingMessage & {req: http.ClientRequest}) {
       resolve(pres);
     });
 

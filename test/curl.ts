@@ -3,22 +3,19 @@
 
 /* eslint-env mocha */
 
-var subject = require('../lib/curl');
-var assert = require('assert');
+import * as subject from '../lib/curl';
+import * as assert from 'assert';
 import * as http from 'http';
 import 'mocha';
 
 describe('curl', function () {
 
   it('formats an http.IncomingRequest', function () {
-    var req = {
-      httpVersion: '1.1',
-      method: 'GET',
-      url: 'https://www.flickr.com',
-      headers: {
-        host: 'www.flickr.com'
-      }
-    };
+    var req = new http.IncomingMessage(null);
+    req.httpVersion = '1.1';
+    req.method = 'GET';
+    req.url = 'https://www.flickr.com';
+    req.headers['host'] = 'www.flickr.com';
 
     assert.deepEqual(subject.request(req),
       '< GET https://www.flickr.com HTTP/1.1\n' +
@@ -28,19 +25,12 @@ describe('curl', function () {
   });
 
   it('formats an http.ServerResponse', function () {
-    var req = {
-      httpVersion: '1.1'
-    };
+    var req = new http.IncomingMessage(null);
+    req.httpVersion = '1.1';
 
-    var res = <Partial<http.ServerResponse>>{
-      statusCode: 200,
-      getHeaders: function () {
-        return {date: 'Wed, 22 Jun 2016 22:02:31 GMT'};
-      },
-      getHeader: function (name: string) {
-        return this.getHeaders()[name];
-      }
-    };
+    var res = new http.ServerResponse(req);
+    res.statusCode = 200;
+    res.setHeader('date', 'Wed, 22 Jun 2016 22:02:31 GMT');
 
     assert.deepEqual(subject.response(req, res),
       '> HTTP/1.1 200 OK\n' +

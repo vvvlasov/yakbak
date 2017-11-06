@@ -1,8 +1,8 @@
 "use strict";
 
-var matchers = require('../lib/matchers');
+import * as matchers from '../lib/matchers';
 import * as  http from 'http';
-var assert = require('assert');
+import * as assert from 'assert';
 import 'mocha';
 import {yakbak} from "../index";
 
@@ -64,7 +64,7 @@ describe('exact url matchers', function () {
 
 describe('matcher generator', function () {
   it('generates valid matcher', function () {
-    var matcherList = matchers.makeExactMatcher(req);
+    var matcherList = matchers.makeExactMatcher(req, []);
     assert.equal(matcherList.reduce((res: boolean, m: yakbak.RequestMatcher) => res && m.match(req), true), true);
   });
 });

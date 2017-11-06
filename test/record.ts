@@ -6,10 +6,10 @@
 import {methodMatcher} from '../lib/matchers';
 import {yakbak} from '../index';
 import subject from '../lib/record';
-import {Dir, createTmpdir} from './helpers/tmpdir';
-const assert = require('assert');
+import {createTmpdir, Dir} from './helpers/tmpdir';
+import * as assert from 'assert';
 import * as http from 'http';
-const fs = require('fs');
+import * as fs from 'fs';
 import 'mocha';
 import createServer, {TestServer} from "./helpers/server";
 

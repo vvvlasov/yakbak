@@ -9,7 +9,6 @@ import {createTmpdir, Dir} from './helpers/tmpdir';
 import 'mocha';
 import * as http from 'http';
 import * as  assert from 'assert';
-
 import * as request from 'supertest';
 import * as fs from 'fs';
 import * as crypto from 'crypto';

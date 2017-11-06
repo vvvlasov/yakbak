@@ -1,12 +1,12 @@
-import {IncomingMessage} from 'http';
+import * as http from 'http';
 import {yakbak} from '../index';
 
-export function makeExactMatcher(req: IncomingMessage, reqbody: any) {
+export function makeExactMatcher(req: http.IncomingMessage, reqbody: any) {
   return [methodMatcher(req.method), exactUrlMatcher(req.url)];
 }
 
 export function methodMatcher($method: string): yakbak.RequestMatcher {
-  const match = function (req: IncomingMessage) {
+  const match = function (req: http.IncomingMessage) {
     return req.method === $method;
   };
   const getString = function () {
@@ -16,7 +16,7 @@ export function methodMatcher($method: string): yakbak.RequestMatcher {
 }
 
 export function exactUrlMatcher($url: string): yakbak.RequestMatcher {
-  const match = function (req: IncomingMessage) {
+  const match = function (req: http.IncomingMessage) {
     return req.url === $url;
   };
   const getString = function () {
@@ -26,7 +26,7 @@ export function exactUrlMatcher($url: string): yakbak.RequestMatcher {
 }
 
 export function regexUrlMatcher($urlRegexp: string): yakbak.RequestMatcher {
-  const match = function (req: IncomingMessage) {
+  const match = function (req: http.IncomingMessage) {
     return new RegExp($urlRegexp).test(req.url);
   };
   const getString = function () {

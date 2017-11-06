@@ -1,7 +1,7 @@
 // Copyright 2016 Yahoo Inc.
 // Licensed under the terms of the MIT license. Please see LICENSE file in the project root for terms.
 
-import {ClientRequest, IncomingMessage, ServerResponse} from 'http';
+import * as http from 'http';
 import * as assert from 'assert';
 import buffer from './lib/buffer';
 import proxy from './lib/proxy';
@@ -25,7 +25,7 @@ const debug = require('debug')('yakbak:server');
 
 export default function (host: string, opts: yakbak.YakbakOptions, matchersList: Array<Array<yakbak.RequestMatcher>> = [[]]) {
 
-  function respond(pres: IncomingMessage, res: ServerResponse, body: Buffer[], filename: string): void {
+  function respond(pres: http.IncomingMessage, res: http.ServerResponse, body: Buffer[], filename: string): void {
     res.statusCode = pres.statusCode;
     Object.keys(pres.headers).forEach(function (key) {
       res.setHeader(key, pres.headers[key]);
@@ -43,7 +43,7 @@ export default function (host: string, opts: yakbak.YakbakOptions, matchersList:
    * @returns {String}
    */
 
-  function tapename(req: IncomingMessage, body: Buffer[]) {
+  function tapename(req: http.IncomingMessage, body: Buffer[]) {
     const hash = opts.hash || messageHash.sync;
     return hash(req, Buffer.concat(body));
   }
@@ -56,7 +56,7 @@ export default function (host: string, opts: yakbak.YakbakOptions, matchersList:
     const responseModules: yakbak.Tape[] = fs.readdirSync(opts.dirname).map(function (filename: string) {
       return require(opts.dirname + '/' + filename);
     });
-    return function (req: IncomingMessage, res: ServerResponse) {
+    return function (req: http.IncomingMessage, res: http.ServerResponse) {
       return buffer(req).then(function (reqbody: Buffer[]) {
         const mod = responseModules.find(mod => mod.matchesRequest(req));
         if (mod) {
@@ -69,12 +69,12 @@ export default function (host: string, opts: yakbak.YakbakOptions, matchersList:
       });
     }
   } else {
-    return function (req: IncomingMessage, res: ServerResponse) {
+    return function (req: http.IncomingMessage, res: http.ServerResponse) {
       return buffer(req).then(function (reqbody: Buffer[]) {
         const tape = tapename(req, reqbody);
         const filename = opts.dirname + '/' + tape + '.js';
 
-        return proxy(req, reqbody, host).then(function (pres: IncomingMessage & {req: ClientRequest}) {
+        return proxy(req, reqbody, host).then(function (pres: http.IncomingMessage & {req: http.ClientRequest}) {
           return buffer(pres).then(function (resbody: Buffer[]) {
             const matching = matchersList.find(
               (matchers) => matchers.reduce((isMatching, matcher) => isMatching && matcher.match(req), true)
@@ -102,12 +102,12 @@ export namespace yakbak {
   }
 
   export interface RequestMatcher {
-    readonly match: (req: IncomingMessage) => boolean;
+    readonly match: (req: http.IncomingMessage) => boolean;
     readonly getString: () => string;
   }
 
   export interface Tape {
-    readonly matchesRequest: (req: IncomingMessage) => boolean;
-    readonly getNext: () => (req: IncomingMessage, res: ServerResponse) => string
+    readonly matchesRequest: (req: http.IncomingMessage) => boolean;
+    readonly getNext: () => (req: http.IncomingMessage, res: http.ServerResponse) => string
   }
 }

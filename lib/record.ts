@@ -2,7 +2,7 @@
 // Licensed under the terms of the MIT license. Please see LICENSE file in the project root for terms.
 
 import * as Promise from 'bluebird';
-import {ClientRequest, IncomingMessage, ServerResponse} from 'http';
+import * as http from 'http';
 import {yakbak} from '../index';
 import * as path from 'path';
 import * as ejs from 'ejs';
@@ -29,7 +29,7 @@ const renderResponse = ejs.compile(fs.readFileSync(path.resolve(__dirname, '../s
  * @returns {Promise.<String>}
  */
 
-export default function (req: ClientRequest, res: IncomingMessage, body: Buffer[], filename: string, matchers: yakbak.RequestMatcher[]) {
+export default function (req: http.ClientRequest, res: http.IncomingMessage, body: Buffer[], filename: string, matchers: yakbak.RequestMatcher[]) {
   return new Promise(function (resolve) {
     if (!fs.existsSync(filename)) {
       resolve(write(filename, renderTape({fns: matchers.map((match) => match.getString())})));

@@ -3,9 +3,9 @@
 
 /* eslint-env mocha */
 
-var subject = require('../out/lib/buffer').default;
-var stream = require('stream');
-var assert = require('assert');
+import subject from '../lib/buffer';
+import * as stream from 'stream';
+import * as assert from 'assert';
 import 'mocha';
 
 describe('buffer', function () {
