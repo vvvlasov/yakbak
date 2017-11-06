@@ -25,7 +25,7 @@ const debug = require('debug')('yakbak:server');
 
 export default function (host: string, opts: yakbak.YakbakOptions, matchersList: Array<Array<yakbak.RequestMatcher>> = [[]]) {
 
-  function respond(pres: http.IncomingMessage, res: http.ServerResponse, body: Buffer[], filename: string): void {
+  function respond(pres: http.IncomingMessage, res: http.ServerResponse, body: Buffer[]): void {
     res.statusCode = pres.statusCode;
     Object.keys(pres.headers).forEach(function (key) {
       res.setHeader(key, pres.headers[key]);
@@ -56,34 +56,43 @@ export default function (host: string, opts: yakbak.YakbakOptions, matchersList:
     const responseModules: yakbak.Tape[] = fs.readdirSync(opts.dirname).map(function (filename: string) {
       return require(opts.dirname + '/' + filename);
     });
-    return function (req: http.IncomingMessage, res: http.ServerResponse) {
-      return buffer(req).then(function (reqbody: Buffer[]) {
-        const mod = responseModules.find(mod => mod.matchesRequest(req));
+    return function (yakReq: http.IncomingMessage, yakRes: http.ServerResponse) {
+      return buffer(yakReq).then(function (yakReqBody: Buffer[]) {
+        const reqWBody: http.IncomingMessage & { body?: {} } = yakReq;
+        if (yakReqBody.length > 0 && yakReq.headers['content-type'] === 'application/json') {
+          reqWBody.body = JSON.parse(Buffer.concat(yakReqBody).toString());
+        }
+        const mod = responseModules.find(mod => mod.matchesRequest(reqWBody));
         if (mod) {
-          return mod.getNext()(req, res);
+          return mod.getNext()(yakReq, yakRes);
         } else {
-          res.statusCode = 404;
-          res.write(new Buffer('{error: \'TapeNotFound\'}'));
-          res.end();
+          yakRes.statusCode = 404;
+          yakRes.write(new Buffer('{error: \'TapeNotFound\'}'));
+          yakRes.end();
         }
       });
     }
   } else {
-    return function (req: http.IncomingMessage, res: http.ServerResponse) {
-      return buffer(req).then(function (reqbody: Buffer[]) {
-        const tape = tapename(req, reqbody);
+    return function (yakReq: http.IncomingMessage, yakRes: http.ServerResponse) {
+      return buffer(yakReq).then(function (yakReqBody: Buffer[]) {
+        const tape = tapename(yakReq, yakReqBody);
         const filename = opts.dirname + '/' + tape + '.js';
 
-        return proxy(req, reqbody, host).then(function (pres: http.IncomingMessage & {req: http.ClientRequest}) {
-          return buffer(pres).then(function (resbody: Buffer[]) {
+        return proxy(yakReq, yakReqBody, host).then(function (proxiedResponse: http.IncomingMessage & { req: http.ClientRequest }) {
+          return buffer(proxiedResponse).then(function (proxiedBody: Buffer[]) {
+            const reqWBody: http.IncomingMessage & { body?: {} } = yakReq;
+            if (yakReqBody.length > 0 && proxiedResponse.headers['content-type'] === 'application/json') {
+              reqWBody.body = JSON.parse(Buffer.concat(yakReqBody).toString());
+            }
             const matching = matchersList.find(
-              (matchers) => matchers.reduce((isMatching, matcher) => isMatching && matcher.match(req), true)
-            );
-            const matchers = matching.length > 0 ? matching : matchersLib.makeExactMatcher(req, reqbody);
-            return record(pres.req, pres, resbody, filename, matchers).then(function () {
-              return opts.pactFilePath ? recordPact(req, pres, reqbody, resbody, opts.pactFilePath) : undefined;
-            }).then(function () {
-              respond(pres, res, resbody, filename);
+              (matchers) => matchers.reduce((isMatching, matcher) => isMatching && matcher.match(yakReq), true)
+            ) || [];
+            const matchers = matching.length > 0 ? matching : matchersLib.makeExactMatcher(yakReq);
+            return record(proxiedResponse.req, proxiedResponse, proxiedBody, filename, matchers).then(function () {
+              if (opts.pactFilePath) {
+                recordPact(yakReq, proxiedResponse, yakReqBody, proxiedBody, opts.pactFilePath)
+              }
+              respond(proxiedResponse, yakRes, proxiedBody);
               return filename;
             });
           });
@@ -102,8 +111,8 @@ export namespace yakbak {
   }
 
   export interface RequestMatcher {
-    readonly match: (req: http.IncomingMessage) => boolean;
-    readonly getString: () => string;
+    readonly match: (req: http.IncomingMessage & { body?: {} }) => boolean;
+    readonly stringified: string
   }
 
   export interface Tape {

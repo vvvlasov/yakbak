@@ -14,6 +14,7 @@ import * as fs from 'fs';
 import * as crypto from 'crypto';
 import * as url from 'url';
 import {methodMatcher} from "../lib/matchers";
+import {CallbackHandler} from "supertest";
 
 describe('yakbak', function () {
   let server: TestServer, tmpdir: Dir, yakbak: Function;
@@ -42,8 +43,10 @@ describe('yakbak', function () {
 
       it('proxies the request to the server', function (done: Function) {
         request(yakbak)
-          .get('/record/1')
+          .post('/record/1')
           .set('host', 'localhost:3001')
+          .set('content-type', 'application/json')
+          .send({body: {prop: 1}})
           .expect('Content-Type', 'text/html')
           .expect(201, 'OK')
           .end(function (err: Error) {
@@ -55,13 +58,15 @@ describe('yakbak', function () {
 
       it('writes the tape to disk', function (done: Function) {
         request(yakbak)
-          .get('/record/2')
+          .post('/record/2')
           .set('host', 'localhost:3001')
+          .set('content-type', 'application/json')
+          .send({body: {prop: 1}})
           .expect('Content-Type', 'text/html')
           .expect(201, 'OK')
           .end(function (err: Error) {
             assert.ifError(err);
-            assert(fs.existsSync(tmpdir.join('3234ee470c8605a1837e08f218494326.js')));
+            assert(fs.existsSync(tmpdir.join('b8ad74d97e98a0efe9b1a37a1b097ae0.js')));
             done();
           });
       });
@@ -105,12 +110,12 @@ describe('yakbak', function () {
         yakbak = subject(server.host, {dirname: tmpdir.dirname, mode: 'replayOnly'});
       });
 
-      it('returns a 404 error', function (done) {
+      it('returns a 404 error', function (done: Function) {
         request(yakbak)
           .get('/record/2')
           .set('host', 'localhost:3001')
           .expect(404)
-          .end(done);
+          .end(done as CallbackHandler);
       });
 
       it('does not make a request to the server', function (done: Function) {
@@ -152,7 +157,11 @@ describe('yakbak', function () {
         '}',
         'function matchesRequest(req) {\n' +
         '  return [function (req) {\n' +
-        '    return req.method === \'GET\';\n' +
+        '    return req.method === \'POST\';\n' +
+        '  }, function (req) {\n' +
+        '    return req.url === \'/playback/1\'\n' +
+        '  }, function (req) {\n' +
+        '    return req.body.body.prop === 1;\n' +
         '  }].reduce((res, fn) => res && fn(req), true);\n' +
         '}',
         'module.exports = {getNext: getNext, matchesRequest: matchesRequest};',
@@ -173,8 +182,10 @@ describe('yakbak', function () {
 
     it('does not make a request to the server', function (done: Function) {
       request(yakbak)
-        .get('/playback/1')
+        .post('/playback/1')
         .set('host', 'localhost:3001')
+        .set('content-type', 'application/json')
+        .send({body: {prop: 1}})
         .expect('Content-Type', 'text/html')
         .expect(201, 'YAY')
         .end(function (err: Error) {

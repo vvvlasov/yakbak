@@ -3,7 +3,7 @@
 
 /* eslint-env mocha */
 
-import {methodMatcher} from '../lib/matchers';
+import {makeExactMatcher} from '../lib/matchers';
 import {yakbak} from '../index';
 import subject from '../lib/record';
 import {createTmpdir, Dir} from './helpers/tmpdir';
@@ -16,8 +16,7 @@ import createServer, {TestServer} from "./helpers/server";
 import fixture from './fixtures';
 
 describe('record', function () {
-  let server: TestServer, tmpdir: Dir, req: http.ClientRequest;
-  const reqMatchers: yakbak.RequestMatcher[] = [methodMatcher('GET')];
+  let server: TestServer, tmpdir: Dir, req: http.ClientRequest, reqMatchers: yakbak.RequestMatcher[];
 
   beforeEach(function (done: Function) {
     server = createServer(done);
@@ -41,6 +40,8 @@ describe('record', function () {
       host: server.addr,
       port: server.port,
       path: '/request/path/1'
+    }, function (inc: http.IncomingMessage) {
+      reqMatchers = makeExactMatcher({method: 'GET', url: '/request/path/1'} as http.IncomingMessage & { body?: {} });
     });
     req.setHeader('User-Agent', 'My User Agent/1.0');
     req.setHeader('Connection', 'close');

@@ -12,6 +12,8 @@ function getNext() {
 function matchesRequest(req) {
   return [function (req) {
         return req.method === 'GET';
+    },function (req) {
+        return req.url === '/request/path/1';
     }].reduce((res, fn) => res && fn(req), true);
 }
 

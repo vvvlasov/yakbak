@@ -32,7 +32,7 @@ const renderResponse = ejs.compile(fs.readFileSync(path.resolve(__dirname, '../s
 export default function (req: http.ClientRequest, res: http.IncomingMessage, body: Buffer[], filename: string, matchers: yakbak.RequestMatcher[]) {
   return new Promise(function (resolve) {
     if (!fs.existsSync(filename)) {
-      resolve(write(filename, renderTape({fns: matchers.map((match) => match.getString())})));
+      resolve(write(filename, renderTape({fns: matchers.map((match: yakbak.RequestMatcher) => match.stringified)})));
     }
     resolve();
   }).then(function () {

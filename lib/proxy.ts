@@ -16,34 +16,34 @@ const mods: any = { 'http:': http, 'https:': https };
 
 /**
  * Proxy `req` to `host` and yield the response.
- * @param {http.IncomingMessage} req
- * @param {Array.<Buffer>} body
+ * @param {http.IncomingMessage} reqToProxy
+ * @param {Array.<Buffer>} bodyToProxy
  * @param {String} host
  * @returns {Promise.<http.IncomingMessage>}
  */
 
-export default function (req: http.IncomingMessage, body: Buffer[], host: string): Promise<http.IncomingMessage> {
+export default function (reqToProxy: http.IncomingMessage, bodyToProxy: Buffer[], host: string): Promise<http.IncomingMessage> {
   return new Promise<http.IncomingMessage & {req: http.ClientRequest}>(function (resolve) {
     const uri: url.Url = url.parse(host);
     const mod = mods[uri.protocol] || http;
     const preq: http.ClientRequest = mod.request({
       hostname: uri.hostname,
       port: uri.port,
-      method: req.method,
-      path: req.url,
-      headers: req.headers,
+      method: reqToProxy.method,
+      path: reqToProxy.url,
+      headers: reqToProxy.headers,
 
       servername: uri.hostname,
       rejectUnauthorized: false
-    }, function (pres: http.IncomingMessage & {req: http.ClientRequest}) {
-      resolve(pres);
+    }, function (proxiedResponse: http.IncomingMessage & {req: http.ClientRequest}) {
+      resolve(proxiedResponse);
     });
 
     preq.setHeader('Host', uri.host);
 
-    debug('req', req.url, 'host', uri.host);
+    debug('req', reqToProxy.url, 'host', uri.host);
 
-    body.forEach(function (buf) {
+    bodyToProxy.forEach(function (buf: Buffer) {
       preq.write(buf);
     });
 
