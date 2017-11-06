@@ -30,7 +30,6 @@
     "mocha": "~2.3.4",
     "os-tmpdir": "^1.0.1",
     "rimraf": "^2.5.2",
-    "semver": "^5.1.0",
     "supertest": "~0.15.0",
     "ts-node": "^3.3.0"
   },
@@ -48,7 +47,6 @@
     "ejs": "~2.3.1",
     "incoming-message-hash": "~3.2.1",
     "mkdirp": "~0.5.0",
-    "promise-retry": "^1.1.1",
     "typescript": "^2.6.1"
   }
 }
