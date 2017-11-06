@@ -9,6 +9,7 @@ import record from './lib/record';
 import recordPact from './lib/recordPact';
 import * as matchersLib from './lib/matchers';
 import * as fs from 'fs';
+import Bluebird = require('bluebird');
 
 const messageHash = require('incoming-message-hash');
 const mkdirp = require('mkdirp');
@@ -23,14 +24,16 @@ const debug = require('debug')('yakbak:server');
  * @returns {Function}
  */
 
-export default function (host: string, opts: yakbak.YakbakOptions, matchersList: Array<Array<yakbak.RequestMatcher>> = [[]]) {
+export default function (host: string,
+  opts: yakbak.YakbakOptions,
+  matchersList: Array<Array<yakbak.RequestMatcher>> = [[]]): (req: http.IncomingMessage, res: http.ServerResponse) => Bluebird<string> {
 
-  function respond(pres: http.IncomingMessage, res: http.ServerResponse, body: Buffer[]): void {
+  function respond(pres: http.IncomingMessage, res: http.ServerResponse, body: Array<Buffer>): void {
     res.statusCode = pres.statusCode;
-    Object.keys(pres.headers).forEach(function (key) {
+    Object.keys(pres.headers).forEach(function (key): void {
       res.setHeader(key, pres.headers[key]);
     });
-    body.forEach(function (data: Buffer) {
+    body.forEach(function (data: Buffer): void {
       res.write(data);
     });
     res.end();
@@ -43,7 +46,7 @@ export default function (host: string, opts: yakbak.YakbakOptions, matchersList:
    * @returns {String}
    */
 
-  function tapename(req: http.IncomingMessage, body: Buffer[]) {
+  function tapename(req: http.IncomingMessage, body: Array<Buffer>): string {
     const hash = opts.hash || messageHash.sync;
     return hash(req, Buffer.concat(body));
   }
@@ -53,16 +56,17 @@ export default function (host: string, opts: yakbak.YakbakOptions, matchersList:
   mkdirp.sync(opts.dirname);
 
   if (opts.mode === 'replayOnly') {
-    const responseModules: yakbak.Tape[] = fs.readdirSync(opts.dirname).map(function (filename: string) {
-      return require(opts.dirname + '/' + filename);
-    });
-    return function (yakReq: http.IncomingMessage, yakRes: http.ServerResponse) {
-      return buffer(yakReq).then(function (yakReqBody: Buffer[]) {
-        const reqWBody: http.IncomingMessage & { body?: {} } = yakReq;
+    const responseModules: Array<yakbak.Tape> = fs.readdirSync(opts.dirname)
+      .map(function (filename: string): yakbak.Tape {
+        return require(opts.dirname + '/' + filename);
+      });
+    return (yakReq: http.IncomingMessage, yakRes: http.ServerResponse) => {
+      return buffer(yakReq).then((yakReqBody: Array<Buffer>) => {
+        const reqWBody: http.IncomingMessage & {body?: {}} = yakReq;
         if (yakReqBody.length > 0 && yakReq.headers['content-type'] === 'application/json') {
           reqWBody.body = JSON.parse(Buffer.concat(yakReqBody).toString());
         }
-        const mod = responseModules.find(mod => mod.matchesRequest(reqWBody));
+        const mod = responseModules.find((respMod) => respMod.matchesRequest(reqWBody));
         if (mod) {
           return mod.getNext()(yakReq, yakRes);
         } else {
@@ -71,26 +75,26 @@ export default function (host: string, opts: yakbak.YakbakOptions, matchersList:
           yakRes.end();
         }
       });
-    }
+    };
   } else {
-    return function (yakReq: http.IncomingMessage, yakRes: http.ServerResponse) {
-      return buffer(yakReq).then(function (yakReqBody: Buffer[]) {
+    return (yakReq: http.IncomingMessage, yakRes: http.ServerResponse) => {
+      return buffer(yakReq).then((yakReqBody: Array<Buffer>) => {
         const tape = tapename(yakReq, yakReqBody);
         const filename = opts.dirname + '/' + tape + '.js';
 
-        return proxy(yakReq, yakReqBody, host).then(function (proxiedResponse: http.IncomingMessage & { req: http.ClientRequest }) {
-          return buffer(proxiedResponse).then(function (proxiedBody: Buffer[]) {
-            const reqWBody: http.IncomingMessage & { body?: {} } = yakReq;
+        return proxy(yakReq, yakReqBody, host).then((proxiedResponse: http.IncomingMessage & {req: http.ClientRequest}) => {
+          return buffer(proxiedResponse).then((proxiedBody: Array<Buffer>) => {
+            const reqWBody: http.IncomingMessage & {body?: {}} = yakReq;
             if (yakReqBody.length > 0 && proxiedResponse.headers['content-type'] === 'application/json') {
               reqWBody.body = JSON.parse(Buffer.concat(yakReqBody).toString());
             }
             const matching = matchersList.find(
-              (matchers) => matchers.reduce((isMatching, matcher) => isMatching && matcher.match(yakReq), true)
+              (reqMatchers: Array<yakbak.RequestMatcher>) => reqMatchers.reduce((isMatching, matcher) => isMatching && matcher.match(yakReq), true)
             ) || [];
             const matchers = matching.length > 0 ? matching : matchersLib.makeExactMatcher(yakReq);
-            return record(proxiedResponse.req, proxiedResponse, proxiedBody, filename, matchers).then(function () {
+            return record(proxiedResponse.req, proxiedResponse, proxiedBody, filename, matchers).then(() => {
               if (opts.pactFilePath) {
-                recordPact(yakReq, proxiedResponse, yakReqBody, proxiedBody, opts.pactFilePath)
+                recordPact(yakReq, proxiedResponse, yakReqBody, proxiedBody, opts.pactFilePath);
               }
               respond(proxiedResponse, yakRes, proxiedBody);
               return filename;
@@ -100,7 +104,7 @@ export default function (host: string, opts: yakbak.YakbakOptions, matchersList:
       });
     };
   }
-};
+}
 
 export namespace yakbak {
   export interface YakbakOptions {
@@ -111,12 +115,12 @@ export namespace yakbak {
   }
 
   export interface RequestMatcher {
-    readonly match: (req: http.IncomingMessage & { body?: {} }) => boolean;
-    readonly stringified: string
+    readonly match: (req: http.IncomingMessage & {body?: {}}) => boolean;
+    readonly stringified: string;
   }
 
   export interface Tape {
     readonly matchesRequest: (req: http.IncomingMessage) => boolean;
-    readonly getNext: () => (req: http.IncomingMessage, res: http.ServerResponse) => string
+    readonly getNext: () => (req: http.IncomingMessage, res: http.ServerResponse) => string;
   }
 }

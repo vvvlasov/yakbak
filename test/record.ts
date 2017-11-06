@@ -11,48 +11,48 @@ import * as assert from 'assert';
 import * as http from 'http';
 import * as fs from 'fs';
 import 'mocha';
-import createServer, {TestServer} from "./helpers/server";
+import createServer, {TestServer} from './helpers/server';
 
 import fixture from './fixtures';
 
-describe('record', function () {
-  let server: TestServer, tmpdir: Dir, req: http.ClientRequest, reqMatchers: yakbak.RequestMatcher[];
+describe('record', () => {
+  let server: TestServer, tmpdir: Dir, req: http.ClientRequest, reqMatchers: Array<yakbak.RequestMatcher>;
 
-  beforeEach(function (done: Function) {
+  beforeEach((done: Function) => {
     server = createServer(done);
   });
 
-  afterEach(function (done: Function) {
+  afterEach((done: Function) => {
     server.teardown(done);
   });
 
-  beforeEach(function (done: Function) {
+  beforeEach((done: Function) => {
     tmpdir = createTmpdir(done);
   });
 
-  afterEach(function (done: Function) {
+  afterEach((done: Function) => {
     tmpdir.teardown(done);
   });
 
-  beforeEach(function () {
+  beforeEach(() => {
     req = http.request({
       method: 'GET',
       host: server.addr,
       port: server.port,
       path: '/request/path/1'
-    }, function (inc: http.IncomingMessage) {
-      reqMatchers = makeExactMatcher({method: 'GET', url: '/request/path/1'} as http.IncomingMessage & { body?: {} });
+    }, (inc: http.IncomingMessage) => {
+      reqMatchers = makeExactMatcher({method: 'GET', url: '/request/path/1'} as http.IncomingMessage & {body?: {}});
     });
     req.setHeader('User-Agent', 'My User Agent/1.0');
     req.setHeader('Connection', 'close');
   });
 
-  it('returns the filename', function (done: Function) {
-    req.on('response', function (res) {
-      subject(req, res, [new Buffer('')], tmpdir.join('foo.js'), reqMatchers).then(function (filename: string) {
+  it('returns the filename', (done: Function) => {
+    req.on('response', (res) => {
+      subject(req, res, [new Buffer('')], tmpdir.join('foo.js'), reqMatchers).then((filename: string) => {
         assert.equal(filename, tmpdir.join('foo.js'));
         done();
-      }).catch(function (err: Error) {
+      }).catch((err: Error) => {
         done(err);
       });
     });
@@ -60,13 +60,13 @@ describe('record', function () {
     req.end();
   });
 
-  it('records the response to disk', function (done: Function) {
+  it('records the response to disk', (done: Function) => {
     const expected = fixture.replace('{addr}', server.addr).replace('{port}', server.port);
-    req.on('response', function (res) {
-      subject(req, res, [new Buffer('')], tmpdir.join('foo.js'), reqMatchers).then(function (filename: string) {
+    req.on('response', (res) => {
+      subject(req, res, [new Buffer('')], tmpdir.join('foo.js'), reqMatchers).then((filename: string) => {
         assert.equal(fs.readFileSync(filename, 'utf8'), expected);
         done();
-      }).catch(function (err: Error) {
+      }).catch((err: Error) => {
         done(err);
       });
     });

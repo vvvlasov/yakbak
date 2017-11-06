@@ -4,8 +4,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
 
-function read(file: string) {
-  return fs.readFileSync(path.join(__dirname, file + '.js'), 'utf8');
+function read(file: string): string {
+  return fs.readFileSync(path.join(__dirname, file + '.js'), 'utf8').toString();
 }
 
 /**

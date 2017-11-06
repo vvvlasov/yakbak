@@ -1,7 +1,7 @@
 // Copyright 2016 Yahoo Inc.
 // Licensed under the terms of the MIT license. Please see LICENSE file in the project root for terms.
 
-import * as http from "http";
+import * as http from 'http';
 import * as fs from 'fs';
 import * as url from 'url';
 import * as path from 'path';
@@ -18,11 +18,11 @@ import * as path from 'path';
  * @returns {Promise.<String>}
  */
 
-export default function (req: http.IncomingMessage, res: http.IncomingMessage, reqbody: Buffer[], resbody: Buffer[], filename: string) {
+export default (req: http.IncomingMessage, res: http.IncomingMessage, reqbody: Array<Buffer>, resbody: Array<Buffer>, filename: string) => {
 
-  function writeJson(json: any) {
+  const writeJson = (json: any) => {
     fs.writeFileSync(filename, JSON.stringify(json, null, 2));
-  }
+  };
 
   if (!fs.existsSync(filename)) {
     writeJson({
@@ -43,7 +43,6 @@ export default function (req: http.IncomingMessage, res: http.IncomingMessage, r
     response: {
       status: res.statusCode
     }
-  })
-  writeJson(pactJson)
+  });
+  writeJson(pactJson);
 };
-

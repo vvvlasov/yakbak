@@ -29,13 +29,13 @@ const renderResponse = ejs.compile(fs.readFileSync(path.resolve(__dirname, '../s
  * @returns {Promise.<String>}
  */
 
-export default function (req: http.ClientRequest, res: http.IncomingMessage, body: Buffer[], filename: string, matchers: yakbak.RequestMatcher[]) {
-  return new Promise(function (resolve) {
+export default (req: http.ClientRequest, res: http.IncomingMessage, body: Array<Buffer>, filename: string, matchers: Array<yakbak.RequestMatcher>) => {
+  return new Promise((resolve) => {
     if (!fs.existsSync(filename)) {
       resolve(write(filename, renderTape({fns: matchers.map((match: yakbak.RequestMatcher) => match.stringified)})));
     }
     resolve();
-  }).then(function () {
+  }).then(() => {
     return append(filename, renderResponse({req: req, res: res, body: body}));
   });
 };

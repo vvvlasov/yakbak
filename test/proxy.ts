@@ -9,52 +9,52 @@ import * as assert from 'assert';
 import * as http from 'http';
 import 'mocha';
 
-describe('proxy', function () {
+describe('proxy', () => {
   let server: TestServer, req: http.IncomingMessage;
 
-  beforeEach(function (done: Function) {
+  beforeEach((done: Function) => {
     server = createServer(done);
   });
 
-  afterEach(function (done: Function) {
+  afterEach((done: Function) => {
     server.teardown(done);
   });
 
-  beforeEach(function () {
+  beforeEach(() => {
     req = new http.IncomingMessage(null);
     req.method = 'GET';
     req.url = '/';
     req.headers['connection'] = 'close';
   });
 
-  it('proxies the request', function (done: Function) {
-    server.once('request', function (preq: http.IncomingMessage) {
+  it('proxies the request', (done: Function) => {
+    server.once('request', (preq: http.IncomingMessage) => {
       assert.equal(preq.method, req.method);
       assert.equal(preq.url, req.url);
       assert.equal(preq.headers.host, server.addr + ':' + server.port);
       done();
     });
 
-    subject(req, [], server.host).catch(function (err: Error) {
+    subject(req, [], server.host).catch((err: Error) => {
       done(err);
     });
   });
 
-  it('proxies the request body', function (done: Function) {
-    var body = [
+  it('proxies the request body', (done: Function) => {
+    const body = [
       new Buffer('a'),
       new Buffer('b'),
       new Buffer('c')
     ];
 
-    server.once('request', function (_req) {
-      var data: Buffer[] = [];
+    server.once('request', (_req) => {
+      const data: Array<Buffer> = [];
 
-      _req.on('data', function (buf: Buffer) {
+      _req.on('data', (buf: Buffer) => {
         data.push(buf);
       });
 
-      _req.on('end', function () {
+      _req.on('end', () => {
         assert.deepEqual(Buffer.concat(data), Buffer.concat(body));
         done();
       });
@@ -62,16 +62,16 @@ describe('proxy', function () {
 
     req.method = 'POST';
 
-    subject(req, body, server.host).catch(function (err: Error) {
+    subject(req, body, server.host).catch((err: Error) => {
       done(err);
     });
   });
 
-  it('yields the response', function (done: Function) {
-    subject(req, [], server.host).then(function (res: http.IncomingMessage) {
+  it('yields the response', (done: Function) => {
+    subject(req, [], server.host).then((res: http.IncomingMessage) => {
       assert.equal(res.statusCode, 201);
       done();
-    }).catch(function (err: Error) {
+    }).catch((err: Error) => {
       done(err);
     });
   });

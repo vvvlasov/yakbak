@@ -10,19 +10,19 @@ import {Readable} from 'stream';
  * @returns {Promise.<Array>}
  */
 
-export default function (stream: Readable) {
-  return new Promise(function (resolve, reject) {
-    let data: Buffer[] = [];
+export default (stream: Readable) => {
+  return new Promise((resolve, reject) => {
+    const data: Array<Buffer> = [];
 
-    stream.on('data', function (buf: Buffer) {
+    stream.on('data', (buf: Buffer) => {
       data.push(buf);
     });
 
-    stream.on('error', function (err: Error) {
+    stream.on('error', (err: Error) => {
       reject(err);
     });
 
-    stream.on('end', function () {
+    stream.on('end', () => {
       resolve(data);
     });
   });

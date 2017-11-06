@@ -12,9 +12,9 @@ import * as path from 'path';
  * @returns {Object}
  */
 
-export function createTmpdir(done: Function) {
+export function createTmpdir(done: Function): Dir {
   return new Dir().setup(done);
-};
+}
 
 export class Dir {
 
@@ -24,18 +24,17 @@ export class Dir {
     this.dirname = path.join(tmpdir(), String(Date.now()));
   }
 
-  join = function (val: string) {
+  join(val: string): string {
     return path.join(this.dirname, val);
-  };
+  }
 
-
-  setup = function (done: Function) {
+  setup(done: Function): Dir {
     mkdirp(this.dirname, done);
     return this;
-  };
+  }
 
-  teardown = function (done: Function) {
+  teardown(done: Function): Dir {
     rimraf(this.dirname, done);
     return this;
-  };
+  }
 }

@@ -5,6 +5,7 @@ import * as Promise from 'bluebird';
 import * as https from 'https';
 import * as http from 'http';
 import * as url from 'url';
+
 const debug = require('debug')('yakbak:proxy');
 
 /**
@@ -12,7 +13,7 @@ const debug = require('debug')('yakbak:proxy');
  * @private
  */
 
-const mods: any = { 'http:': http, 'https:': https };
+const mods: any = {'http:': http, 'https:': https};
 
 /**
  * Proxy `req` to `host` and yield the response.
@@ -22,8 +23,8 @@ const mods: any = { 'http:': http, 'https:': https };
  * @returns {Promise.<http.IncomingMessage>}
  */
 
-export default function (reqToProxy: http.IncomingMessage, bodyToProxy: Buffer[], host: string): Promise<http.IncomingMessage> {
-  return new Promise<http.IncomingMessage & {req: http.ClientRequest}>(function (resolve) {
+export default function (reqToProxy: http.IncomingMessage, bodyToProxy: Array<Buffer>, host: string): Promise<http.IncomingMessage> {
+  return new Promise<http.IncomingMessage & {req: http.ClientRequest}>((resolve) => {
     const uri: url.Url = url.parse(host);
     const mod = mods[uri.protocol] || http;
     const preq: http.ClientRequest = mod.request({
@@ -35,7 +36,7 @@ export default function (reqToProxy: http.IncomingMessage, bodyToProxy: Buffer[]
 
       servername: uri.hostname,
       rejectUnauthorized: false
-    }, function (proxiedResponse: http.IncomingMessage & {req: http.ClientRequest}) {
+    }, (proxiedResponse: http.IncomingMessage & {req: http.ClientRequest}) => {
       resolve(proxiedResponse);
     });
 
@@ -43,10 +44,10 @@ export default function (reqToProxy: http.IncomingMessage, bodyToProxy: Buffer[]
 
     debug('req', reqToProxy.url, 'host', uri.host);
 
-    bodyToProxy.forEach(function (buf: Buffer) {
+    bodyToProxy.forEach((buf: Buffer) => {
       preq.write(buf);
     });
 
     preq.end();
   });
-};
+}

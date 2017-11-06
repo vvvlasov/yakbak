@@ -4,7 +4,8 @@
   "description": "Record and playback HTTP responses",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint cli.js index.js lib test",
+    "lint-fix": "tsfmt -r && tslint --fix -c tslint.json --project './tsconfig.json'",
+    "lint": "tsfmt --verify && tslint -c tslint.json --project './tsconfig.json'",
     "test": "mocha --require ts-node/register ./test/*.ts",
     "build": "tsc"
   },
@@ -31,7 +32,10 @@
     "os-tmpdir": "^1.0.1",
     "rimraf": "^2.5.2",
     "supertest": "~0.15.0",
-    "ts-node": "^3.3.0"
+    "ts-node": "^3.3.0",
+    "tslint": "^5.8.0",
+    "tslint-microsoft-contrib": "^5.0.1",
+    "typescript-formatter": "^7.0.0"
   },
   "dependencies": {
     "@types/bluebird": "^3.5.18",

@@ -8,19 +8,19 @@ import * as stream from 'stream';
 import * as assert from 'assert';
 import 'mocha';
 
-describe('buffer', function () {
+describe('buffer', () => {
 
-  it('yields the stream contents', function (done) {
-    var str = new stream.PassThrough;
+  it('yields the stream contents', (done) => {
+    const str = new stream.PassThrough;
 
-    subject(str).then(function (body: {}) {
+    subject(str).then((body: {}) => {
       assert.deepEqual(body, [
         new Buffer('a'),
         new Buffer('b'),
         new Buffer('c')
       ]);
       done();
-    }).catch(function (err: Error) {
+    }).catch((err: Error) => {
       done(err);
     });
 
@@ -30,12 +30,12 @@ describe('buffer', function () {
     str.end();
   });
 
-  it('yields an error', function (done: Function) {
-    var str = new stream.PassThrough;
+  it('yields an error', (done: Function) => {
+    const str = new stream.PassThrough;
 
-    subject(str).then(function () {
+    subject(str).then(() => {
       done(new Error('should have yielded an error'));
-    }).catch(function (err: Error) {
+    }).catch((err: Error) => {
       assert.equal(err.message, 'boom');
       done();
     });

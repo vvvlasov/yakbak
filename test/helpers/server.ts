@@ -9,10 +9,10 @@ import * as http from 'http';
  * @returns {http.Server}
  */
 
-export default function (cb: Function): TestServer {
+export default (cb: Function): TestServer => {
 
   const server: any =
-    http.createServer(function (req: http.IncomingMessage, res: http.ServerResponse) {
+    http.createServer(function (req: http.IncomingMessage, res: http.ServerResponse): void {
       res.statusCode = 201;
 
       res.setHeader('Content-Type', 'text/html');
@@ -20,29 +20,28 @@ export default function (cb: Function): TestServer {
 
       req.resume(); // consume the request body, if any
 
-      req.on('end', function () {
+      req.on('end', function (): void {
         res.end('OK');
       });
 
-    }).on('listening', function () {
+    }).on('listening', function (): void {
       this.addr = 'localhost';
       this.port = this.address().port;
 
       this.host = 'http://' + this.addr + ':' + this.port;
-    }).on('listening', function () {
+    }).on('listening', function (): void {
       this.requests = [];
-    }).on('close', function () {
+    }).on('close', function (): void {
       this.requests = [];
-    }).on('request', function (req) {
+    }).on('request', function (req): void {
       this.requests.push(req);
     });
 
-  server.teardown = function (done: Function) {
+  server.teardown = function (done: Function): void {
     this.close(done);
   };
 
   return server.listen(cb);
-
 };
 
 export type TestServer = http.Server & {
@@ -50,5 +49,5 @@ export type TestServer = http.Server & {
   host: string,
   addr: string,
   port: string,
-  requests: any[]
-}
+  requests: Array<any>
+};

@@ -8,10 +8,10 @@ import * as assert from 'assert';
 import * as http from 'http';
 import 'mocha';
 
-describe('curl', function () {
+describe('curl', () => {
 
-  it('formats an http.IncomingRequest', function () {
-    var req = new http.IncomingMessage(null);
+  it('formats an http.IncomingRequest', () => {
+    const req = new http.IncomingMessage(null);
     req.httpVersion = '1.1';
     req.method = 'GET';
     req.url = 'https://www.flickr.com';
@@ -24,11 +24,11 @@ describe('curl', function () {
     );
   });
 
-  it('formats an http.ServerResponse', function () {
-    var req = new http.IncomingMessage(null);
+  it('formats an http.ServerResponse', () => {
+    const req = new http.IncomingMessage(null);
     req.httpVersion = '1.1';
 
-    var res = new http.ServerResponse(req);
+    const res = new http.ServerResponse(req);
     res.statusCode = 200;
     res.setHeader('date', 'Wed, 22 Jun 2016 22:02:31 GMT');
 

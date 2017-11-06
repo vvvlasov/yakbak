@@ -7,18 +7,18 @@ import * as util from 'util';
  * @returns {String}
  */
 
-export function request(req: http.IncomingMessage) {
-  var out = util.format('< %s %s HTTP/%s\n',
+export function request(req: http.IncomingMessage): string {
+  let out = util.format('< %s %s HTTP/%s\n',
     req.method,
     req.url,
     req.httpVersion);
 
-  Object.keys(req.headers).forEach(function (name: string) {
+  Object.keys(req.headers).forEach((name: string) => {
     out += util.format('< %s: %s\n', name, req.headers[name]);
   });
 
   return out + '<';
-};
+}
 
 /**
  * Formats an http.ServerResponse like curl does
@@ -26,15 +26,15 @@ export function request(req: http.IncomingMessage) {
  * @returns {String}
  */
 
-export function response (req: http.IncomingMessage, res: http.ServerResponse) {
-  var out = util.format('> HTTP/%s %s %s\n',
+export function response(req: http.IncomingMessage, res: http.ServerResponse): string {
+  let out = util.format('> HTTP/%s %s %s\n',
     req.httpVersion,
     res.statusCode,
     http.STATUS_CODES[res.statusCode]);
 
-  Object.keys(res.getHeaders()).forEach(function (name: string) {
+  Object.keys(res.getHeaders()).forEach((name: string) => {
     out += util.format('> %s: %s\n', name, res.getHeader(name));
   });
 
   return out + '>';
-};
+}
