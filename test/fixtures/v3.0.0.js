@@ -11,8 +11,8 @@ function getNext() {
 
 function matchesRequest(req) {
   return [function (req) {
-    return req.method === 'GET';
-  }].reduce((res, fn) => res && fn(req), true);
+        return req.method === 'GET';
+    }].reduce((res, fn) => res && fn(req), true);
 }
 
 module.exports = {getNext, matchesRequest};
@@ -35,6 +35,7 @@ responseArray.push(
 
     res.setHeader("x-yakbak-tape", path.basename(__filename, ".js"));
 
+    res.write(new Buffer("", "base64"));
     res.end();
 
     return __filename;

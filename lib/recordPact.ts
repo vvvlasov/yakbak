@@ -1,13 +1,10 @@
 // Copyright 2016 Yahoo Inc.
 // Licensed under the terms of the MIT license. Please see LICENSE file in the project root for terms.
 
-var Promise = require('bluebird');
-var buffer = require('./buffer');
-var path = require('path');
-var ejs = require('ejs');
-var fs = require('fs');
-var debug = require('debug')('yakbak:record');
-var url = require('url');
+import {IncomingMessage, ServerResponse} from "http";
+import * as fs from 'fs';
+import * as url from 'url';
+import * as path from 'path';
 
 /**
  * Record the http interaction between `req` and `res` to disk as pact file.
@@ -21,9 +18,9 @@ var url = require('url');
  * @returns {Promise.<String>}
  */
 
-module.exports = function (req, res, reqbody, resbody, filename) {
+export default function (req: IncomingMessage, res: IncomingMessage, reqbody: Buffer[], resbody: Buffer[], filename: string) {
 
-  function writeJson(json) {
+  function writeJson(json: any) {
     fs.writeFileSync(filename, JSON.stringify(json, null, 2));
   }
 
@@ -34,10 +31,10 @@ module.exports = function (req, res, reqbody, resbody, filename) {
       interactions: []
     });
   }
-  const pactJson = JSON.parse(fs.readFileSync(filename));
+  const pactJson: any = JSON.parse(fs.readFileSync(filename).toString());
   pactJson.interactions.push({
     description: `${req.method} ${req.url} ${
-      pactJson.interactions.filter(int => int.description.indexOf(`${req.method} ${req.url}`) !== -1).length}`,
+      pactJson.interactions.filter((int: any) => int.description.indexOf(`${req.method} ${req.url}`) !== -1).length}`,
     request: {
       method: req.method,
       path: url.parse(req.url).pathname,

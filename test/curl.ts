@@ -5,6 +5,8 @@
 
 var subject = require('../lib/curl');
 var assert = require('assert');
+import * as http from 'http';
+import 'mocha';
 
 describe('curl', function () {
 
@@ -30,10 +32,13 @@ describe('curl', function () {
       httpVersion: '1.1'
     };
 
-    var res = {
-      statusCode: '200',
-      _headers: {
-        date: 'Wed, 22 Jun 2016 22:02:31 GMT'
+    var res = <Partial<http.ServerResponse>>{
+      statusCode: 200,
+      getHeaders: function () {
+        return {date: 'Wed, 22 Jun 2016 22:02:31 GMT'};
+      },
+      getHeader: function (name: string) {
+        return this.getHeaders()[name];
       }
     };
 

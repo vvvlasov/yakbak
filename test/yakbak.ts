@@ -3,61 +3,64 @@
 
 /* eslint-env mocha */
 
-var subject = require('..');
-var createServer = require('./helpers/server');
-var createTmpdir = require('./helpers/tmpdir');
-var request = require('supertest');
-var assert = require('assert');
-var fs = require('fs');
-var crypto = require('crypto');
-var url = require('url');
+import subject, {yakbak} from '../index';
+import createServer, {TestServer} from './helpers/server';
+import {createTmpdir, Dir} from './helpers/tmpdir';
+import 'mocha';
+import * as http from 'http';
+import * as  assert from 'assert';
+
+import * as request from 'supertest';
+import * as fs from 'fs';
+import * as crypto from 'crypto';
+import * as url from 'url';
+import {methodMatcher} from "../lib/matchers";
 
 describe('yakbak', function () {
-  var server, tmpdir, yakbak;
+  let server: TestServer, tmpdir: Dir, yakbak: Function;
 
-  beforeEach(function (done) {
+  beforeEach(function (done: Function) {
     server = createServer(done);
   });
 
-  afterEach(function (done) {
+  afterEach(function (done: Function) {
     server.teardown(done);
   });
 
-  beforeEach(function (done) {
+  beforeEach(function (done: Function) {
     tmpdir = createTmpdir(done);
   });
 
-  afterEach(function (done) {
+  afterEach(function (done: Function) {
     tmpdir.teardown(done);
   });
 
   describe('record', function () {
     describe('when recording is enabled', function () {
       beforeEach(function () {
-        yakbak = subject(server.host, {dirname: tmpdir.dirname});
+        yakbak = subject(server.host, {dirname: tmpdir.dirname}, [[methodMatcher('GET')]]);
       });
 
-      it('proxies the request to the server', function (done) {
+      it('proxies the request to the server', function (done: Function) {
         request(yakbak)
           .get('/record/1')
           .set('host', 'localhost:3001')
-          //.expect('X-Yakbak-Tape', '1a574e91da6cf00ac18bc97abaed139e')
           .expect('Content-Type', 'text/html')
           .expect(201, 'OK')
-          .end(function (err) {
+          .end(function (err: Error) {
             assert.ifError(err);
             assert.equal(server.requests.length, 1);
             done();
           });
       });
 
-      it('writes the tape to disk', function (done) {
+      it('writes the tape to disk', function (done: Function) {
         request(yakbak)
           .get('/record/2')
           .set('host', 'localhost:3001')
           .expect('Content-Type', 'text/html')
           .expect(201, 'OK')
-          .end(function (err) {
+          .end(function (err: Error) {
             assert.ifError(err);
             assert(fs.existsSync(tmpdir.join('3234ee470c8605a1837e08f218494326.js')));
             done();
@@ -69,9 +72,9 @@ describe('yakbak', function () {
           yakbak = subject(server.host, {dirname: tmpdir.dirname, hash: customHash});
 
           // customHash creates a MD5 of the request, ignoring its querystring, headers, etc.
-          function customHash(req, body) {
-            var hash = crypto.createHash('md5');
-            var parts = url.parse(req.url, true);
+          function customHash(req: http.IncomingMessage, body: Buffer) {
+            const hash = crypto.createHash('md5');
+            const parts = url.parse(req.url, true);
 
             hash.update(req.method);
             hash.update(parts.pathname);
@@ -81,7 +84,7 @@ describe('yakbak', function () {
           }
         });
 
-        it('uses the custom hash to create the tape name', function (done) {
+        it('uses the custom hash to create the tape name', function (done: Function) {
           request(yakbak)
             .get('/record/1')
             .query({foo: 'bar'})
@@ -89,7 +92,7 @@ describe('yakbak', function () {
             .set('host', 'localhost:3001')
             .expect('Content-Type', 'text/html')
             .expect(201, 'OK')
-            .end(function (err) {
+            .end(function (err: Error) {
               assert.ifError(err);
               assert(fs.existsSync(tmpdir.join('3f142e515cb24d1af9e51e6869bf666f.js')));
               done();
@@ -111,22 +114,22 @@ describe('yakbak', function () {
           .end(done);
       });
 
-      it('does not make a request to the server', function (done) {
+      it('does not make a request to the server', function (done: Function) {
         request(yakbak)
           .get('/record/2')
           .set('host', 'localhost:3001')
-          .end(function (err) {
+          .end(function (err: Error) {
             assert.ifError(err);
             assert.equal(server.requests.length, 0);
             done();
           });
       });
 
-      it('does not write the tape to disk', function (done) {
+      it('does not write the tape to disk', function (done: Function) {
         request(yakbak)
           .get('/record/2')
           .set('host', 'localhost:3001')
-          .end(function (err) {
+          .end(function (err: Error) {
             assert.ifError(err);
             assert(!fs.existsSync(tmpdir.join('3234ee470c8605a1837e08f218494326.js')));
             done();
@@ -137,19 +140,21 @@ describe('yakbak', function () {
 
   describe('playback', function () {
 
-    beforeEach(function (done) {
-      var file = '305c77b0a3ad7632e51c717408d8be0f.js';
-      var tape = [
-        'var path = require("path");',
-        'var responseArray = [];',
+    beforeEach(function (done: Function) {
+      const file = '305c77b0a3ad7632e51c717408d8be0f.js';
+      const tape = [
+        'const path = require("path");',
+        'const responseArray = [];',
         'var callIndex = 0;',
         'function getNext() {',
         'const fn = responseArray[callIndex];',
         'callIndex += 1;',
         'return fn;',
         '}',
-        'function matchesRequest (req) {',
-        'return req.method === \'GET\' && /\\/playback\\/1/.test(req.url);',
+        'function matchesRequest(req) {\n' +
+        '  return [function (req) {\n' +
+        '    return req.method === \'GET\';\n' +
+        '  }].reduce((res, fn) => res && fn(req), true);\n' +
         '}',
         'module.exports = {getNext: getNext, matchesRequest: matchesRequest};',
         'responseArray.push(function (req, res) {',
@@ -162,18 +167,18 @@ describe('yakbak', function () {
       ].join('\n');
 
       fs.writeFile(tmpdir.join(file), tape, function () {
-          yakbak = subject(server.host, {dirname: tmpdir.dirname, mode: 'replayOnly'});
-          done();
-        });
+        yakbak = subject(server.address().address, {dirname: tmpdir.dirname, mode: 'replayOnly'});
+        done();
+      });
     });
 
-    it('does not make a request to the server', function (done) {
+    it('does not make a request to the server', function (done: Function) {
       request(yakbak)
         .get('/playback/1')
         .set('host', 'localhost:3001')
         .expect('Content-Type', 'text/html')
         .expect(201, 'YAY')
-        .end(function (err) {
+        .end(function (err: Error) {
           assert.ifError(err);
           assert.equal(server.requests.length, 0);
           done();

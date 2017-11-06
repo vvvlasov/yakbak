@@ -1,18 +1,20 @@
 // Copyright 2016 Yahoo Inc.
 // Licensed under the terms of the MIT license. Please see LICENSE file in the project root for terms.
 
-var Promise = require('bluebird');
-var https = require('https');
-var http = require('http');
-var url = require('url');
-var debug = require('debug')('yakbak:proxy');
+import * as Promise from 'bluebird';
+import {ClientRequest, IncomingMessage} from "http";
+import {Url} from "url";
+const https = require('https');
+const http = require('http');
+const url = require('url');
+const debug = require('debug')('yakbak:proxy');
 
 /**
  * Protocol to module map, natch.
  * @private
  */
 
-var mods = { 'http:': http, 'https:': https };
+const mods: any = { 'http:': http, 'https:': https };
 
 /**
  * Proxy `req` to `host` and yield the response.
@@ -22,11 +24,11 @@ var mods = { 'http:': http, 'https:': https };
  * @returns {Promise.<http.IncomingMessage>}
  */
 
-module.exports = function proxy(req, body, host) {
-  return new Promise(function (resolve /* , reject */) {
-    var uri = url.parse(host);
-    var mod = mods[uri.protocol] || http;
-    var preq = mod.request({
+export default function (req: IncomingMessage, body: Buffer[], host: string): Promise<IncomingMessage> {
+  return new Promise<IncomingMessage & {req: ClientRequest}>(function (resolve) {
+    const uri: Url = url.parse(host);
+    const mod = mods[uri.protocol] || http;
+    const preq: ClientRequest = mod.request({
       hostname: uri.hostname,
       port: uri.port,
       method: req.method,
@@ -35,7 +37,7 @@ module.exports = function proxy(req, body, host) {
 
       servername: uri.hostname,
       rejectUnauthorized: false
-    }, function (pres) {
+    }, function (pres: IncomingMessage & {req: ClientRequest}) {
       resolve(pres);
     });
 

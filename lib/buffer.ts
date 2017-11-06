@@ -1,7 +1,8 @@
 // Copyright 2016 Yahoo Inc.
 // Licensed under the terms of the MIT license. Please see LICENSE file in the project root for terms.
 
-var Promise = require('bluebird');
+import * as Promise from 'bluebird';
+import {Readable} from "stream";
 
 /**
  * Collect `stream`'s data in to an array of Buffers.
@@ -9,15 +10,15 @@ var Promise = require('bluebird');
  * @returns {Promise.<Array>}
  */
 
-module.exports = function buffer(stream) {
+export default function (stream: Readable) {
   return new Promise(function (resolve, reject) {
-    var data = [];
+    let data: Buffer[] = [];
 
-    stream.on('data', function (buf) {
+    stream.on('data', function (buf: Buffer) {
       data.push(buf);
     });
 
-    stream.on('error', function (err) {
+    stream.on('error', function (err: Error) {
       reject(err);
     });
 

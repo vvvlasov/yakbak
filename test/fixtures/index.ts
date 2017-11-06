@@ -1,11 +1,10 @@
 // Copyright 2016 Yahoo Inc.
 // Licensed under the terms of the MIT license. Please see LICENSE file in the project root for terms.
 
-var semver = require('semver');
-var path = require('path');
-var fs = require('fs');
+import * as path from 'path';
+import * as fs from 'fs';
 
-function read(file) {
+function read(file: string) {
   return fs.readFileSync(path.join(__dirname, file + '.js'), 'utf8');
 }
 
@@ -14,4 +13,5 @@ function read(file) {
  * @see https://github.com/nodejs/node/pull/1062
  */
 
-module.exports = read('v3.0.0');
+const fixture = read('v3.0.0');
+export default fixture;
